@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="ClaudeShift lets you save and switch between multiple Claude.ai accounts instantly. No login, no logout. Runs entirely in your browser." />
+  <meta property="og:title" content="ClaudeShift — Switch Claude accounts instantly" />
+  <meta property="og:description" content="Save and switch between multiple Claude.ai accounts with one click. 100% local. Free and open source." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://codebysreyas.github.io/ClaudeShift" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <title>ClaudeShift — Switch Claude accounts instantly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── Design Tokens ─────────────────────────────────────────── */
+    :root {
+      --s1: 8px;  --s2: 16px; --s3: 24px; --s4: 32px;
+      --s5: 40px; --s6: 48px; --s8: 64px; --s10: 80px;
+      --s12: 96px; --s16: 128px;
+
+      --ink:        #141414;
+      --ink-mid:    #6b6b6b;
+      --ink-faint:  #c8c8c8;
+      --paper:      #f8f7f4;
+      --paper-alt:  #f0ede8;
+      --rule:       #e4e1db;
+      --accent:     #c94a1e;
+      --accent-dim: #f2e6e1;
+
+      --font-display: 'Instrument Serif', Georgia, serif;
+      --font-body:    'Figtree', system-ui, sans-serif;
+      --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+
+      --text-xs:   0.75rem;
+      --text-sm:   0.875rem;
+      --text-base: 1rem;
+      --text-lg:   1.125rem;
+      --text-xl:   1.375rem;
+      --text-2xl:  1.75rem;
+      --text-3xl:  2.5rem;
+      --text-4xl:  3.5rem;
+      --text-5xl:  5rem;
+
+      --leading-tight:  1.1;
+      --leading-snug:   1.3;
+      --leading-normal: 1.55;
+      --leading-loose:  1.7;
+
+      --radius: 6px;
+      --max-w:  1080px;
+      --max-w-text: 640px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      line-height: var(--leading-normal);
+    }
+
+    img { display: block; max-width: 100%; }
+    a { color: inherit; }
+
+    .container {
+      max-width: var(--max-w);
+      margin-inline: auto;
+      padding-inline: var(--s6);
+    }
+
+    @media (max-width: 640px) { .container { padding-inline: var(--s3); } }
+
+    /* ─── Nav ──────────────────────────────────────────────────── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      background: rgba(248,247,244,0.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .nav__inner {
+      max-width: var(--max-w);
+      margin-inline: auto;
+      padding-inline: var(--s6);
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav__logo {
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .nav__logo em { font-style: italic; color: var(--accent); }
+
+    .nav__link {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--ink-mid);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: color 0.15s;
+    }
+    .nav__link:hover { color: var(--ink); }
+
+    @media (max-width: 640px) { .nav__inner { padding-inline: var(--s3); } }
+
+    /* ─── Hero ─────────────────────────────────────────────────── */
+    .hero {
+      padding-top: calc(56px + var(--s16));
+      padding-bottom: var(--s16);
+    }
+
+    .hero__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s1);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: var(--s4);
+      opacity: 0;
+      animation: rise 0.5s 0.1s ease forwards;
+    }
+    .hero__eyebrow::before {
+      content: '';
+      display: block;
+      width: 24px; height: 1px;
+      background: var(--accent);
+    }
+
+    .hero__heading {
+      font-family: var(--font-display);
+      font-size: clamp(var(--text-3xl), 6vw, var(--text-5xl));
+      font-weight: 400;
+      line-height: var(--leading-tight);
+      letter-spacing: -0.02em;
+      max-width: 820px;
+      opacity: 0;
+      animation: rise 0.5s 0.2s ease forwards;
+    }
+    .hero__heading em { font-style: italic; color: var(--accent); }
+
+    .hero__body {
+      margin-top: var(--s4);
+      font-size: var(--text-lg);
+      color: var(--ink-mid);
+      line-height: var(--leading-loose);
+      max-width: var(--max-w-text);
+      opacity: 0;
+      animation: rise 0.5s 0.3s ease forwards;
+    }
+
+    .hero__actions {
+      margin-top: var(--s6);
+      display: flex;
+      align-items: center;
+      gap: var(--s3);
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: rise 0.5s 0.4s ease forwards;
+    }
+
+    /* ─── Buttons ──────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s1);
+      padding: 12px var(--s4);
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+      white-space: nowrap;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn--primary {
+      background: var(--ink);
+      color: var(--paper);
+    }
+    .btn--primary:hover {
+      background: #2a2a2a;
+      box-shadow: 0 4px 16px rgba(20,20,20,0.18);
+    }
+
+    .btn--ghost {
+      background: transparent;
+      color: var(--ink-mid);
+      border: 1px solid var(--rule);
+    }
+    .btn--ghost:hover { border-color: var(--ink-faint); color: var(--ink); }
+
+    /* ─── Demo ─────────────────────────────────────────────────── */
+    .demo {
+      padding-top: var(--s10);
+      padding-bottom: var(--s16);
+      opacity: 0;
+      animation: rise 0.6s 0.5s ease forwards;
+    }
+
+    .demo__frame {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--rule);
+      box-shadow:
+        0 1px 2px rgba(0,0,0,0.04),
+        0 8px 32px rgba(0,0,0,0.08),
+        0 32px 64px rgba(0,0,0,0.06);
+    }
+
+    .demo__bar {
+      display: flex;
+      align-items: center;
+      gap: var(--s1);
+      padding: 12px var(--s2);
+      background: var(--paper-alt);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .demo__dot { width: 10px; height: 10px; border-radius: 50%; }
+    .demo__dot--r { background: #ff5f57; }
+    .demo__dot--y { background: #febc2e; }
+    .demo__dot--g { background: #28c840; }
+
+    .demo__url {
+      margin-left: var(--s2);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--ink-mid);
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 3px 12px;
+    }
+
+    .demo__frame img { width: 100%; display: block; background: var(--paper-alt); }
+
+    .divider { border: none; border-top: 1px solid var(--rule); margin: 0; }
+
+    /* ─── Features ─────────────────────────────────────────────── */
+    .features { padding-block: var(--s16); }
+
+    .features__header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--s8);
+      align-items: end;
+      margin-bottom: var(--s10);
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--ink-mid);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: var(--s3);
+    }
+
+    .section-heading {
+      font-family: var(--font-display);
+      font-size: clamp(var(--text-2xl), 3.5vw, var(--text-4xl));
+      font-weight: 400;
+      line-height: var(--leading-snug);
+      letter-spacing: -0.02em;
+    }
+    .section-heading em { font-style: italic; color: var(--accent); }
+
+    .features__intro {
+      font-size: var(--text-base);
+      color: var(--ink-mid);
+      line-height: var(--leading-loose);
+      max-width: 360px;
+      align-self: end;
+    }
+
+    .features__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--rule);
+    }
+
+    .feature {
+      padding: var(--s6) var(--s5) var(--s6) 0;
+      border-right: 1px solid var(--rule);
+    }
+    .feature:last-child { border-right: none; padding-right: 0; }
+    .feature:not(:first-child) { padding-left: var(--s5); }
+
+    .feature__index {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--ink-faint);
+      letter-spacing: 0.06em;
+      margin-bottom: var(--s4);
+    }
+
+    .feature__title {
+      font-size: var(--text-base);
+      font-weight: 600;
+      margin-bottom: var(--s2);
+      letter-spacing: -0.01em;
+    }
+
+    .feature__desc {
+      font-size: var(--text-sm);
+      color: var(--ink-mid);
+      line-height: var(--leading-loose);
+    }
+
+    @media (max-width: 768px) {
+      .features__header { grid-template-columns: 1fr; gap: var(--s4); }
+      .features__intro { max-width: 100%; }
+      .features__grid { grid-template-columns: 1fr; }
+      .feature { border-right: none; border-bottom: 1px solid var(--rule); padding: var(--s5) 0; }
+      .feature:not(:first-child) { padding-left: 0; }
+      .feature:last-child { border-bottom: none; }
+    }
+
+    /* ─── Steps ────────────────────────────────────────────────── */
+    .steps-section {
+      padding-block: var(--s16);
+      background: var(--paper-alt);
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .steps-section .container {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: var(--s16);
+      align-items: start;
+    }
+
+    .steps-section__aside {
+      position: sticky;
+      top: calc(56px + var(--s8));
+    }
+
+    .steps { list-style: none; }
+
+    .step {
+      display: grid;
+      grid-template-columns: var(--s8) 1fr;
+      gap: var(--s4);
+      padding-block: var(--s5);
+      border-bottom: 1px solid var(--rule);
+    }
+    .step:last-child { border-bottom: none; }
+
+    .step__num {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--ink-faint);
+      padding-top: 3px;
+    }
+
+    .step__title {
+      font-size: var(--text-base);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: var(--s1);
+    }
+
+    .step__desc {
+      font-size: var(--text-sm);
+      color: var(--ink-mid);
+      line-height: var(--leading-loose);
+    }
+
+    .step__code {
+      display: inline-block;
+      margin-top: var(--s2);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 4px 10px;
+      color: var(--ink-mid);
+    }
+
+    @media (max-width: 768px) {
+      .steps-section .container { grid-template-columns: 1fr; gap: var(--s8); }
+      .steps-section__aside { position: static; }
+    }
+
+    /* ─── Privacy ──────────────────────────────────────────────── */
+    .privacy { padding-block: var(--s10); }
+
+    .privacy__inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s6);
+      padding: var(--s6);
+      background: var(--accent-dim);
+      border-radius: var(--radius);
+      border: 1px solid rgba(201,74,30,0.15);
+    }
+
+    .privacy__text {
+      font-size: var(--text-sm);
+      color: var(--ink);
+      line-height: var(--leading-loose);
+      max-width: 560px;
+    }
+    .privacy__text strong { font-weight: 600; }
+
+    .privacy__link {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--accent);
+      text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .privacy__link:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      .privacy__inner { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* ─── CTA ──────────────────────────────────────────────────── */
+    .cta-section {
+      padding-block: var(--s16);
+      text-align: center;
+      border-top: 1px solid var(--rule);
+    }
+    .cta-section .section-heading { margin-bottom: var(--s4); }
+    .cta-section p { color: var(--ink-mid); font-size: var(--text-base); margin-bottom: var(--s6); }
+    .cta-section .hero__actions { justify-content: center; opacity: 1; animation: none; }
+
+    /* ─── Footer ───────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--rule);
+      padding-block: var(--s5);
+    }
+
+    footer .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s4);
+      flex-wrap: wrap;
+    }
+
+    .footer__left {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--ink-mid);
+    }
+
+    .footer__right { display: flex; gap: var(--s4); }
+
+    .footer__right a {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--ink-mid);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer__right a:hover { color: var(--ink); }
+
+    /* ─── Animations ───────────────────────────────────────────── */
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <header class="nav" role="banner">
+    <div class="nav__inner">
+      <a href="#" class="nav__logo">Claude<em>Shift</em></a>
+      <a href="https://github.com/codebysreyas/ClaudeShift" class="nav__link" target="_blank" rel="noopener">GitHub →</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <p class="hero__eyebrow">Chrome Extension · Open Source</p>
+        <h1 class="hero__heading">
+          Stop logging in and out.<br />
+          Switch Claude accounts <em>instantly.</em>
+        </h1>
+        <p class="hero__body">
+          ClaudeShift saves your Claude.ai sessions locally in your browser.
+          One click to switch between accounts — no passwords, no redirects, no wasted time.
+        </p>
+        <div class="hero__actions">
+          <a href="https://github.com/codebysreyas/ClaudeShift#installation" class="btn btn--primary" target="_blank" rel="noopener">Install free</a>
+          <a href="https://github.com/codebysreyas/ClaudeShift" class="btn btn--ghost" target="_blank" rel="noopener">View source</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="demo">
+      <div class="container">
+        <div class="demo__frame">
+          <div class="demo__bar">
+            <div class="demo__dot demo__dot--r"></div>
+            <div class="demo__dot demo__dot--y"></div>
+            <div class="demo__dot demo__dot--g"></div>
+            <span class="demo__url">claude.ai</span>
+          </div>
+          <img src="assets/demo.gif" alt="ClaudeShift switching between two Claude.ai accounts with a single click" loading="lazy" />
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="features reveal">
+      <div class="container">
+        <div class="features__header">
+          <div>
+            <p class="section-label">Why it exists</p>
+            <h2 class="section-heading">Built for people who use Claude <em>seriously.</em></h2>
+          </div>
+          <p class="features__intro">
+            Researchers, developers, and anyone juggling work and personal accounts
+            shouldn't have to log in twice. ClaudeShift removes that friction entirely.
+          </p>
+        </div>
+        <div class="features__grid">
+          <div class="feature">
+            <p class="feature__index">01</p>
+            <h3 class="feature__title">One-click switching</h3>
+            <p class="feature__desc">Select a saved session from the popup. The tab refreshes and you're in. No login form, no waiting, no friction.</p>
+          </div>
+          <div class="feature">
+            <p class="feature__index">02</p>
+            <h3 class="feature__title">Entirely local</h3>
+            <p class="feature__desc">Session data is stored using Chrome's built-in storage API. Nothing is sent to any server — not ours, not anyone's.</p>
+          </div>
+          <div class="feature">
+            <p class="feature__index">03</p>
+            <h3 class="feature__title">Unlimited profiles</h3>
+            <p class="feature__desc">Save as many Claude accounts as you need — work, personal, client projects. Each one is a single click away.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="steps-section reveal">
+      <div class="container">
+        <div class="steps-section__aside">
+          <p class="section-label">Installation</p>
+          <h2 class="section-heading">Running in <em>30 seconds.</em></h2>
+        </div>
+        <ol class="steps">
+          <li class="step">
+            <span class="step__num">01</span>
+            <div>
+              <h3 class="step__title">Download the extension</h3>
+              <p class="step__desc">Clone or download this repository to your machine. No build step required — it's plain JavaScript.</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step__num">02</span>
+            <div>
+              <h3 class="step__title">Load it into Chrome</h3>
+              <p class="step__desc">Enable Developer Mode in Chrome extensions, then click Load unpacked and select the project folder.</p>
+              <span class="step__code">chrome://extensions/</span>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step__num">03</span>
+            <div>
+              <h3 class="step__title">Save your first session</h3>
+              <p class="step__desc">Open claude.ai, log into your first account, click the ClaudeShift icon, and hit Save Session.</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step__num">04</span>
+            <div>
+              <h3 class="step__title">Switch between accounts</h3>
+              <p class="step__desc">Repeat for each account. From then on, switching is a single click from the extension popup — any time, on any Claude tab.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="privacy reveal">
+      <div class="container">
+        <div class="privacy__inner">
+          <p class="privacy__text">
+            <strong>No data collection. No tracking. No external servers.</strong>
+            ClaudeShift uses Chrome's local storage API. Your session data never leaves your device and is never accessible to anyone but you.
+          </p>
+          <a href="https://github.com/codebysreyas/ClaudeShift/blob/main/Privacy_Policy.md" class="privacy__link" target="_blank" rel="noopener">Read full policy →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-section reveal">
+      <div class="container">
+        <p class="section-label">Get started</p>
+        <h2 class="section-heading">Free. Open source. <em>Ready now.</em></h2>
+        <p>Install in developer mode — takes under a minute.</p>
+        <div class="hero__actions">
+          <a href="https://github.com/codebysreyas/ClaudeShift#installation" class="btn btn--primary" target="_blank" rel="noopener">Install free</a>
+          <a href="https://github.com/codebysreyas/ClaudeShift" class="btn btn--ghost" target="_blank" rel="noopener">View on GitHub</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer role="contentinfo">
+    <div class="container">
+      <p class="footer__left">
+        Built by <a href="mailto:sreyasmurali150@gmail.com" style="color:inherit;">Sreyas VM</a>
+        &nbsp;·&nbsp; Not affiliated with Anthropic
+      </p>
+      <nav class="footer__right" aria-label="Footer links">
+        <a href="https://github.com/codebysreyas/ClaudeShift" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/codebysreyas/ClaudeShift/blob/main/Privacy_Policy.md" target="_blank" rel="noopener">Privacy</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+      }),
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
