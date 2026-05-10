@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClaudeShift</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+  <div class="app">
+
+    <header class="header">
+      <div class="header-brand">
+        <svg class="header-logo" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect width="20" height="20" rx="5" fill="#2563EB"/>
+          <path d="M5 10h4m0 0V6m0 4v4m0-4h6" stroke="white" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        <span class="header-title">ClaudeShift</span>
+      </div>
+      <span class="header-version">v2.0</span>
+    </header>
+
+    <div class="banner banner-warning" id="incognitoBanner" hidden>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M7 1L13 12H1L7 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        <path d="M7 5.5v3M7 10h.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span>Enable ClaudeShift in Incognito to add accounts. <button class="banner-link" id="incognitoHelpBtn">How?</button></span>
+    </div>
+
+    <div class="onboarding" id="onboarding" hidden>
+      <div class="onboarding-step" id="step1">
+        <div class="onboarding-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect x="3" y="3" width="22" height="22" rx="5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M9 14h10M14 9v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 class="onboarding-title">Welcome to ClaudeShift</h2>
+        <p class="onboarding-desc">Switch between multiple Claude accounts instantly. Let's save your first account.</p>
+        <button class="btn btn-primary" id="onboardingSaveBtn">Save Current Account</button>
+      </div>
+    </div>
+
+    <div class="status-bar" id="statusBar" hidden>
+      <div class="status-indicator">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">No active profile</span>
+      </div>
+      <button class="btn-icon" id="refreshBtn" title="Refresh session">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M12.5 7A5.5 5.5 0 1 1 7 1.5a5.5 5.5 0 0 1 4.5 2.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M9.5 3.5H12V1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="autorefresh-bar" id="autoRefreshBar" hidden>
+      <div class="autorefresh-left">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M11.5 6.5A5 5 0 1 1 6.5 1.5a5 5 0 0 1 4 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          <path d="M8.5 3.5H11V1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="autorefresh-label">Auto-refresh</span>
+        <span class="autorefresh-status" id="autoRefreshStatus"></span>
+      </div>
+      <div class="autorefresh-right">
+        <select class="autorefresh-select" id="autoRefreshInterval">
+          <option value="5">5 min</option>
+          <option value="10" selected>10 min</option>
+          <option value="20">20 min</option>
+          <option value="30">30 min</option>
+          <option value="60">1 hr</option>
+        </select>
+        <label class="toggle" title="Enable auto-refresh">
+          <input type="checkbox" id="autoRefreshToggle"/>
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="search-wrap" id="searchWrap" hidden>
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M9.5 9.5L13 13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="Search profiles…" autocomplete="off" spellcheck="false"/>
+    </div>
+
+    <div class="profile-list" id="profileList"></div>
+
+    <div class="empty-state" id="noResults" hidden>
+      <p class="empty-title">No results</p>
+      <p class="empty-sub">Try a different search term.</p>
+    </div>
+
+    <footer class="footer" id="footer" hidden>
+      <button class="btn btn-primary" id="addAccountBtn">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        Add Account
+      </button>
+      <button class="btn btn-ghost" id="saveBtn">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M2 9.5V11h1.5l4.5-4.5L6.5 5 2 9.5zM10.7 3.8a1 1 0 0 0 0-1.4l-1.1-1.1a1 1 0 0 0-1.4 0L7.1 2.4 9.6 4.9l1.1-1.1z" fill="currentColor"/>
+        </svg>
+        Save Current
+      </button>
+    </footer>
+
+  </div>
+
+  <div class="modal-backdrop" id="incognitoHelpModal" hidden>
+    <div class="modal">
+      <h3 class="modal-title">Enable in Incognito</h3>
+      <div class="modal-steps">
+        <div class="modal-step">
+          <span class="step-num">1</span>
+          <span>Go to <strong>chrome://extensions</strong></span>
+        </div>
+        <div class="modal-step">
+          <span class="step-num">2</span>
+          <span>Find <strong>ClaudeShift</strong> → click Details</span>
+        </div>
+        <div class="modal-step">
+          <span class="step-num">3</span>
+          <span>Turn on <strong>Allow in Incognito</strong></span>
+        </div>
+        <div class="modal-step">
+          <span class="step-num">4</span>
+          <span>Come back here and click <strong>Add Account</strong></span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="helpCloseBtn">Got it</button>
+        <button class="btn btn-primary" id="openExtensionsBtn">Open Extensions</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="renameModal" hidden>
+    <div class="modal">
+      <h3 class="modal-title">Rename Profile</h3>
+      <input class="modal-input" id="renameInput" type="text" placeholder="Profile name" spellcheck="false"/>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="renameCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="renameConfirmBtn">Rename</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
